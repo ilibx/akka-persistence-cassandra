@@ -23,7 +23,7 @@ import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 import akka.persistence.journal.{ AsyncWriteJournal, Tagged }
 import akka.persistence.query.PersistenceQuery
 import akka.persistence.cassandra.journal.TagWriters.{ BulkTagWrite, TagWrite, TagWritersSession }
-import akka.persistence.cassandra.journal.TagWriter.{ TagProgress }
+import akka.persistence.cassandra.journal.TagWriter.TagProgress
 import akka.cassandra.session.scaladsl.CassandraSessionRegistry
 import akka.serialization.{ AsyncSerializer, Serialization, SerializationExtension }
 import akka.stream.ActorMaterializer
@@ -41,6 +41,9 @@ import scala.concurrent._
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
 import scala.compat.java8.FutureConverters._
+
+import akka.annotation.DoNotInherit
+import akka.annotation.InternalStableApi
 import akka.stream.scaladsl.Source
 
 /**
@@ -48,7 +51,9 @@ import akka.stream.scaladsl.Source
  *
  * Journal implementation of the cassandra plugin.
  */
-@InternalApi private[akka] final class CassandraJournal(cfg: Config, cfgPath: String)
+@DoNotInherit
+@InternalStableApi // extended by Multi-DC Persistence
+@InternalApi private[akka] class CassandraJournal(cfg: Config, cfgPath: String)
     extends AsyncWriteJournal
     with NoSerializationVerificationNeeded {
   import CassandraJournal._
