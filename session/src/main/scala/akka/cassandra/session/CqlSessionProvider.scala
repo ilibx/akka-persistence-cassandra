@@ -4,16 +4,18 @@
 
 package akka.cassandra.session
 
-import akka.actor.{ ActorSystem, ExtendedActorSystem }
-import akka.util.unused
-import com.typesafe.config.Config
-
 import scala.collection.immutable
-import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.Failure
 import scala.compat.java8.FutureConverters._
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.Failure
+
+import akka.actor.ActorSystem
+import akka.actor.ExtendedActorSystem
+import akka.util.unused
 import com.datastax.oss.driver.api.core.CqlSession
-import com.datastax.oss.driver.api.core.config.{ DefaultDriverOption, DriverConfigLoader }
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 
 /**
  * The implementation of the `SessionProvider` is used for creating the
@@ -33,14 +35,26 @@ trait CqlSessionProvider {
 class DefaultSessionProvider(@unused system: ActorSystem, config: Config) extends CqlSessionProvider {
   override def connect()(implicit ec: ExecutionContext): Future[CqlSession] = {
     val builder = CqlSession.builder()
-    val sessionName = config.getString("session-name")
-    (if (sessionName != null && sessionName.nonEmpty) {
-       val overload: DriverConfigLoader =
-         DriverConfigLoader.programmaticBuilder().withString(DefaultDriverOption.SESSION_NAME, sessionName).build()
-       builder.withConfigLoader(overload)
-     } else {
-       builder
-     }).buildAsync().toScala
+    // FIXME PN: could we just define the session name in the `datastax-java-driver.basic.session-name`?
+//    val sessionName = config.getString("session-name")
+//    (if (sessionName != null && sessionName.nonEmpty) {
+//       val overload: DriverConfigLoader =
+//         DriverConfigLoader.programmaticBuilder().withString(DefaultDriverOption.SESSION_NAME, sessionName).build()
+//       builder.withConfigLoader(overload)
+//     } else {
+//       builder
+//     }).buildAsync().toScala
+
+    val driverConfigPath = config.getString("datastax-java-driver-config")
+    val driverConfig =
+      system.settings.config
+        .getConfig(driverConfigPath)
+        .withFallback(if (driverConfigPath == "datastax-java-driver") ConfigFactory.empty()
+        else system.settings.config.getConfig("datastax-java-driver"))
+
+    val driverConfigLoader = DriverConfigLoaderFromConfig.fromConfig(driverConfig)
+
+    builder.withConfigLoader(driverConfigLoader).buildAsync().toScala
   }
 }
 

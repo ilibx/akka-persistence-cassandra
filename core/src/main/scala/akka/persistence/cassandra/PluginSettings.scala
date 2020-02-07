@@ -43,9 +43,10 @@ import com.typesafe.config.Config
     new PluginSettings(system, config)
 
   private[akka] def checkProfile(system: ActorSystem, profile: String) = {
-    require(
-      system.settings.config.hasPath(s"datastax-java-driver.profiles.$profile"),
-      s"profile $profile does not exist in `datastax-java-driver.profiles`")
+    // FIXME PN
+//    require(
+//      system.settings.config.hasPath(s"datastax-java-driver.profiles.$profile"),
+//      s"profile $profile does not exist in `datastax-java-driver.profiles`")
   }
 
   val keyspaceNameRegex =
